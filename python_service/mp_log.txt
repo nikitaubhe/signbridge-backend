@@ -1,0 +1,6 @@
+Imported mp
+Traceback (most recent call last):
+  File "E:\signbridge\python_service\check_mp_log.py", line 6, in <module>
+    mp_hands = mp.solutions.hands
+               ^^^^^^^^^^^^
+AttributeError: module 'mediapipe' has no attribute 'solutions'

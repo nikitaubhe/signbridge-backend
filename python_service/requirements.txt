@@ -1,0 +1,9 @@
+flask
+flask-cors
+tensorflow
+keras
+opencv-python
+mediapipe
+numpy
+pillow
+scikit-learn
