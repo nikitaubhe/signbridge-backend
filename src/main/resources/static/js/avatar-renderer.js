@@ -99,8 +99,8 @@ const AvatarRenderer = (function () {
         controls.target.set(0, 0.8, 0);
         controls.enableDamping = true;
         controls.dampingFactor = 0.05;
-        controls.minDistance = 1.5;
-        controls.maxDistance = 8;
+        controls.minDistance = 0.5;
+        controls.maxDistance = 1000;
         controls.maxPolarAngle = Math.PI / 2;
         controls.update();
 
@@ -243,37 +243,29 @@ const AvatarRenderer = (function () {
     }
 
     function fitModelToCamera(model) {
-        // First, measure the raw model
-        const box = new THREE.Box3().setFromObject(model);
-        const size = box.getSize(new THREE.Vector3());
-        const center = box.getCenter(new THREE.Vector3());
+        console.log("Applying completely hardcoded avatar parameters as requested...");
 
-        console.log('Model bounds:', { size, center, min: box.min, max: box.max });
+        // 1. HARDCODE SCALE: 0.9 scale to look prominent
+        model.scale.set(0.9, 0.9, 0.9);
 
-        // Normalize: scale model so height is ~1.8 units (human height)
-        const targetHeight = 1.8;
-        const scaleFactor = targetHeight / size.y;
-        model.scale.multiplyScalar(scaleFactor);
+        // 2. HARDCODE POSITION: -3.8 was underneath the floor! Bring it up significantly.
+        model.position.set(0, -1.0, 0);
 
-        // Recalculate after scaling
-        const newBox = new THREE.Box3().setFromObject(model);
-        const newCenter = newBox.getCenter(new THREE.Vector3());
-        const newSize = newBox.getSize(new THREE.Vector3());
+        // 3. HARDCODE CAMERA: Pull the camera much closer and slightly up
+        camera.position.set(0, 1.0, 6.0);
+        camera.lookAt(0, 0, 0);
 
-        // Position model so feet are at y=0 and centered on x/z
-        model.position.x -= newCenter.x;
-        model.position.y -= newBox.min.y; // feet on ground
-        model.position.z -= newCenter.z;
+        // 4. ELIMINATE CLIPPING: Make sure it cannot vanish due to being too close or too far
+        camera.near = 0.01;
+        camera.far = 10000;
+        camera.updateProjectionMatrix();
 
-        console.log('After normalization:', { newSize, scaleFactor });
-
-        // Position camera to see full model
-        const lookAtY = targetHeight / 2; // look at mid-body
-        camera.position.set(0, lookAtY + 0.2, 3.5);
-        camera.lookAt(0, lookAtY, 0);
-
+        // 5. LOCK CONTROLS: Lock target and prevent panning
         if (controls) {
-            controls.target.set(0, lookAtY, 0);
+            controls.target.set(0, 0, 0);
+            controls.minDistance = 1;
+            controls.maxDistance = 20;
+            controls.enablePan = false;
             controls.update();
         }
     }
