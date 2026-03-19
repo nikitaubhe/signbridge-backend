@@ -47,12 +47,27 @@ public class PythonMLServiceImpl implements PythonMLService {
 
             if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
                 Map<String, Object> body = response.getBody();
-                return new PredictionResponse(
+
+                // Safe confidence unwrap — null during warmup frames
+                Number confNum = (Number) body.get("confidence");
+                Double confidence = confNum != null ? confNum.doubleValue() : null;
+
+                // Pass through all fields from Flask
+                PredictionResponse pr = new PredictionResponse(
                         (String) body.get("predictedSign"),
                         (String) body.get("mappedWord"),
-                        ((Number) body.get("confidence")).doubleValue(),
-                        "Prediction successful",
+                        confidence,
+                        (String) body.get("message"),
                         true);
+
+                // Forward warmup/progress fields
+                pr.setRequiresMoreFrames(Boolean.TRUE.equals(body.get("requiresMoreFrames")));
+                Object prog = body.get("progress");
+                Object tot  = body.get("total");
+                if (prog != null) pr.setProgress(((Number) prog).intValue());
+                if (tot  != null) pr.setTotal(((Number) tot).intValue());
+
+                return pr;
             } else {
                 return new PredictionResponse(false, "Failed to get prediction from Python service");
             }
