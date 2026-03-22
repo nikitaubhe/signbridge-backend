@@ -284,6 +284,13 @@ const AvatarRenderer = (function () {
 
         console.log(`Playing animation: ${signName} -> ${filename}`);
         isLoading = true;
+        
+        // Auto-scroll to avatar container
+        const avatarContainer = document.querySelector('.avatar-container');
+        if (avatarContainer) {
+            avatarContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
         showLoading(`Performing: ${signName}...`);
 
         loadModel(filename, (gltf) => {
