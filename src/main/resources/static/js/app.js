@@ -22,7 +22,7 @@ const signsList     = document.getElementById('signs-list');
 
 // ── Configuration ─────────────────────────────────────────────────────────
 const JAVA_API_URL = '/api/sign-language'; 
-const FLASK_URL    = 'http://localhost:5000'; // BYPASSING JAVA FOR SPEED!
+const FLASK_URL    = '/api/python'; // ROUTED VIA VERCEL
 const FPS          = 15;
 const INTERVAL_MS  = 1000 / FPS;
 const JPEG_QUALITY = 0.5; // Small payload

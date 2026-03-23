@@ -1,9 +1,6 @@
 flask
 flask-cors
-tensorflow
-keras
-opencv-python
+opencv-python-headless
 mediapipe
 numpy
 pillow
-scikit-learn

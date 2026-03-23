@@ -1,0 +1,14 @@
+{
+  "version": 2,
+  "cleanUrls": true,
+  "builds": [
+    {
+      "src": "python_service/flask_server.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "rewrites": [
+    { "source": "/api/python/:match*", "destination": "/python_service/flask_server.py" },
+    { "source": "/(.*)", "destination": "/src/main/resources/static/$1" }
+  ]
+}
