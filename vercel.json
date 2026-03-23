@@ -3,15 +3,10 @@
   "cleanUrls": true,
   "functions": {
     "python_service/flask_server.py": {
+      "runtime": "@vercel/python",
       "includeFiles": "python_service/**"
     }
   },
-  "builds": [
-    {
-      "src": "python_service/flask_server.py",
-      "use": "@vercel/python"
-    }
-  ],
   "rewrites": [
     { "source": "/api/python/:match*", "destination": "/python_service/flask_server.py" },
     { "source": "/", "destination": "/src/main/resources/static/index.html" },
