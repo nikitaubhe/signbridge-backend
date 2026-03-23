@@ -8,8 +8,6 @@
     }
   },
   "rewrites": [
-    { "source": "/api/python/:match*", "destination": "/python_service/flask_server.py" },
-    { "source": "/", "destination": "/src/main/resources/static/index.html" },
-    { "source": "/(.*)", "destination": "/src/main/resources/static/$1" }
+    { "source": "/api/python/:match*", "destination": "/python_service/flask_server.py" }
   ]
 }

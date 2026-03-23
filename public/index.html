@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SignBridge - Real-time Sign Language Recognition</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <!-- Google Fonts for premium look -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <!-- Three.js Import Map for ES Modules -->
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+        }
+    }
+    </script>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>SignBridge</h1>
+            <p>Real-time Sign Language to Text Translation</p>
+        </header>
+
+        <main>
+            <div class="tabs">
+                <button class="tab-btn active" data-tab="sign-to-text">Sign to Text</button>
+                <button class="tab-btn" data-tab="text-to-sign">Text to Sign</button>
+            </div>
+
+            <!-- Sign to Text Tab Content -->
+            <div id="sign-to-text" class="tab-content active">
+                <div class="video-container">
+                    <video id="webcam" autoplay playsinline></video>
+                    <canvas id="output_canvas"></canvas>
+                    <div class="status-indicator" id="status-indicator">Connecting...</div>
+                </div>
+
+                <div class="results-container">
+                    <div class="result-box">
+                        <h3>Predicted Sign</h3>
+                        <div id="predicted-sign" class="prediction-text">--</div>
+                    </div>
+                    <div class="result-box">
+                        <h3>Confidence</h3>
+                        <div id="confidence-level" class="prediction-text">0%</div>
+                    </div>
+                </div>
+
+                <div class="controls">
+                    <button id="start-btn" class="btn primary">Start Camera</button>
+                    <button id="stop-btn" class="btn secondary" disabled>Stop Camera</button>
+                </div>
+            </div>
+
+            <!-- Text to Sign Tab Content -->
+            <div id="text-to-sign" class="tab-content">
+                <div class="avatar-container">
+                    <div id="avatar-canvas-container"></div>
+                    <div class="avatar-status" id="avatar-status">Loading Avatar...</div>
+                </div>
+
+                <div class="text-input-container">
+                    <input type="text" id="sign-text-input"
+                        placeholder="Type a word or phrase (e.g., Hello, Thank You)...">
+                    <button id="play-sign-btn" class="btn primary">Play Sign</button>
+                </div>
+
+                <div class="dictionary-container">
+                    <h3>Available Signs</h3>
+                    <div id="signs-list" class="signs-list">
+                        <span class="sign-tag">Hello</span>
+                        <span class="sign-tag">Hi</span>
+                        <span class="sign-tag">Thank You</span>
+                        <span class="sign-tag">Good evening</span>
+                        <span class="sign-tag">How are u</span>
+                        <span class="sign-tag">I am fine</span>
+                        <span class="sign-tag">I need water</span>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/app.js"></script>
+    <script type="module" src="js/avatar-renderer.js"></script>
+</body>
+
+</html>

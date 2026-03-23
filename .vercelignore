@@ -1,0 +1,10 @@
+# Ignore Java sources and artifacts from Vercel deployment
+src/
+target/
+pom.xml
+mvnw*
+.mvn/
+*.txt
+!python_service/requirements.txt
+# Ignore original static files since they've been moved to public/
+src/main/resources/static/
