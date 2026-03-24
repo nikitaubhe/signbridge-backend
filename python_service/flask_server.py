@@ -33,21 +33,16 @@ word_map = {
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
 
-# ── Load model (DISABLED FOR VERCEL SIZE LIMITS / UNUSED BY SERVER) ───────────
-# logger.info("Loading model...")
-# try:
-#     current_dir = os.path.dirname(os.path.abspath(__file__))
-#     model_json_path = os.path.join(current_dir, "model.json")
-#     model_h5_path = os.path.join(current_dir, "model.h5")
-#     
-#     with open(model_json_path, "r") as f:
-#         model = model_from_json(f.read())
-#     model.load_weights(model_h5_path)
-#     logger.info("Model loaded OK")
-# except Exception as e:
-#     logger.error(f"Model load FAILED: {e}")
-#     model = None
-model = "HEURISTIC_ONLY" # Dummy non-None to pass the check below
+# ── Load model ───────────────────────────────────────────────────────────────
+logger.info("Loading model...")
+try:
+    with open("model.json", "r") as f:
+        model = model_from_json(f.read())
+    model.load_weights("model.h5")
+    logger.info("Model loaded OK")
+except Exception as e:
+    logger.error(f"Model load FAILED: {e}")
+    model = None
 
 # ── Parameters (Instant Reliability Fix) ───────────────────────────────────
 SEQUENCE_LENGTH = 1     # Set to 1 for instant response (no sequence needed)

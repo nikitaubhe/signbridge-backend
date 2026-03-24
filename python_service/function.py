@@ -11,9 +11,7 @@ no_sequences = 30
 sequence_length = 30
 
 # Initialize Global Landmarker (Lazy Loading recommended in main app, but helper here)
-current_dir = os.path.dirname(os.path.abspath(__file__))
-model_asset_path = os.path.join(current_dir, 'hand_landmarker.task')
-base_options = python.BaseOptions(model_asset_path=model_asset_path)
+base_options = python.BaseOptions(model_asset_path='hand_landmarker.task')
 options = vision.HandLandmarkerOptions(base_options=base_options,
                                        num_hands=1,
                                        min_hand_detection_confidence=0.5,
