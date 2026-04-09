@@ -1,3 +1,6 @@
+import os
+os.environ["MEDIAPIPE_DISABLE_GPU"] = "1"
+os.environ["XDG_RUNTIME_DIR"] = "/tmp"
 import cv2
 import numpy as np
 import os
