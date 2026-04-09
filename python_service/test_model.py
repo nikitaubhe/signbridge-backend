@@ -31,6 +31,9 @@ threshold = 0.8
 
 cap = cv2.VideoCapture(0)
 
+if not cap.isOpened():
+    print("ERROR: Could not open webcam at index 0. You might need to change the 0 to 1 or 2, or check Windows Camera Privacy settings.")
+
 # Set mediapipe model 
 # Detector is already initialized in function.py as 'detector'
 while cap.isOpened():
@@ -38,6 +41,7 @@ while cap.isOpened():
     # Read feed
     ret, frame = cap.read()
     if not ret:
+        print("ERROR: Failed to capture image from camera.")
         break
 
     # Make detections

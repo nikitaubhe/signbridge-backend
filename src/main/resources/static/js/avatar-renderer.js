@@ -24,7 +24,8 @@ const AvatarRenderer = (function () {
         'good evening': 'Good evening.glb',
         'how are u': 'How are u.glb',
         'i am fine': 'I am fine.glb',
-        'i need water': 'I need water.glb'
+        'i need water': 'I need water.glb',
+        'i am sorry': 'I am sorry.glb'
     };
 
     const MODELS_PATH = '/api/models/';
@@ -284,7 +285,7 @@ const AvatarRenderer = (function () {
 
         console.log(`Playing animation: ${signName} -> ${filename}`);
         isLoading = true;
-        
+
         // Auto-scroll to avatar container
         const avatarContainer = document.querySelector('.avatar-container');
         if (avatarContainer) {
