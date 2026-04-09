@@ -17,7 +17,13 @@ options = vision.HandLandmarkerOptions(base_options=base_options,
                                        min_hand_detection_confidence=0.5,
                                        min_hand_presence_confidence=0.5,
                                        min_tracking_confidence=0.5)
-detector = vision.HandLandmarker.create_from_options(options)
+_detector = None
+
+def get_detector():
+    global _detector
+    if _detector is None:
+        _detector = vision.HandLandmarker.create_from_options(options)
+    return _detector
 
 def mediapipe_detection(image, detector_instance):
     """
