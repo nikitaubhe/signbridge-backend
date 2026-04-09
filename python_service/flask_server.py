@@ -1,3 +1,4 @@
+from function import *, get_detector
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from function import *
@@ -112,7 +113,7 @@ def predict():
         frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
 
         # MediaPipe detection
-        _, results = mediapipe_detection(frame, detector)
+       _, results = mediapipe_detection(frame, get_detector())
         keypoints = extract_keypoints(results)
 
         hand_detected = bool(np.any(keypoints != 0))
