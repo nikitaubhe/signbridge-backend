@@ -78,98 +78,98 @@ def health_check():
     }), 200
  
  
-# @app.route('/predict', methods=['POST'])
-# def predict():
-#     global sequence, predictions
+@app.route('/predict', methods=['POST'])
+def predict():
+    global sequence, predictions
  
-#     if model is None:
-#         return jsonify({'success': False, 'message': 'Model not loaded'}), 500
+    if model is None:
+        return jsonify({'success': False, 'message': 'Model not loaded'}), 500
  
-#     try:
-#         data = request.json
-#         frame_data = data.get('frame') or data.get('frameData')
+    try:
+        data = request.json
+        frame_data = data.get('frame') or data.get('frameData')
  
-#         if not frame_data:
-#             return jsonify({'success': False, 'message': 'No frame data'}), 400
+        if not frame_data:
+            return jsonify({'success': False, 'message': 'No frame data'}), 400
  
-#         # Strip base64 header
-#         if 'base64,' in frame_data:
-#             frame_data = frame_data.split('base64,')[1]
+        # Strip base64 header
+        if 'base64,' in frame_data:
+            frame_data = frame_data.split('base64,')[1]
  
-#         # Decode image
-#         image_bytes = base64.b64decode(frame_data)
-#         image = Image.open(BytesIO(image_bytes)).convert('RGB')
-#         frame = np.array(image)
-#         frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+        # Decode image
+        image_bytes = base64.b64decode(frame_data)
+        image = Image.open(BytesIO(image_bytes)).convert('RGB')
+        frame = np.array(image)
+        frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
  
-#         # MediaPipe detection
-#         _, results = mediapipe_detection(frame)
-#         keypoints = extract_keypoints(results)
+        # MediaPipe detection
+        _, results = mediapipe_detection(frame, get_detector())
+        keypoints = extract_keypoints(results)
  
-#         hand_detected = bool(np.any(keypoints != 0))
+        hand_detected = bool(np.any(keypoints != 0))
  
-#         # ── 1. Heuristic Detection (Fast Overrides) ──
-#         h_sign, h_conf = detect_sign_heuristic(keypoints)
+        # ── 1. Heuristic Detection (Fast Overrides) ──
+        h_sign, h_conf = detect_sign_heuristic(keypoints)
  
-#         if h_sign and h_conf > 0.8:
-#             display_word = word_map.get(h_sign, h_sign)
-#             return jsonify({
-#                 'success':            True,
-#                 'requiresMoreFrames': False,
-#                 'predictedSign':      h_sign,
-#                 'mappedWord':         display_word,
-#                 'confidence':         h_conf,
-#                 'handDetected':       hand_detected,
-#                 'message':            'OK (Heuristic)'
-#             }), 200
+        if h_sign and h_conf > 0.8:
+            display_word = word_map.get(h_sign, h_sign)
+            return jsonify({
+                'success':            True,
+                'requiresMoreFrames': False,
+                'predictedSign':      h_sign,
+                'mappedWord':         display_word,
+                'confidence':         h_conf,
+                'handDetected':       hand_detected,
+                'message':            'OK (Heuristic)'
+            }), 200
  
-#         # ── 2. Sequential ML Detection (A-F Alphabet) ──
-#         sequence.append(keypoints)
-#         sequence = sequence[-SEQUENCE_LENGTH:]
+        # ── 2. Sequential ML Detection (A-F Alphabet) ──
+        sequence.append(keypoints)
+        sequence = sequence[-SEQUENCE_LENGTH:]
  
-#         if len(sequence) < SEQUENCE_LENGTH:
-#             return jsonify({
-#                 'success':            True,
-#                 'requiresMoreFrames': True,
-#                 'progress':           len(sequence),
-#                 'total':              SEQUENCE_LENGTH,
-#                 'handDetected':       hand_detected,
-#                 'message':            f'Collecting {len(sequence)}/{SEQUENCE_LENGTH}'
-#             }), 200
+        if len(sequence) < SEQUENCE_LENGTH:
+            return jsonify({
+                'success':            True,
+                'requiresMoreFrames': True,
+                'progress':           len(sequence),
+                'total':              SEQUENCE_LENGTH,
+                'handDetected':       hand_detected,
+                'message':            f'Collecting {len(sequence)}/{SEQUENCE_LENGTH}'
+            }), 200
  
-#         input_data = np.expand_dims(sequence, axis=0)
-#         res = model(input_data, training=False)[0]
-#         max_idx = int(np.argmax(res))
-#         conf = float(res[max_idx])
+        input_data = np.expand_dims(sequence, axis=0)
+        res = model(input_data, training=False)[0]
+        max_idx = int(np.argmax(res))
+        conf = float(res[max_idx])
  
-#         predictions.append(max_idx)
-#         predictions = predictions[-10:]
+        predictions.append(max_idx)
+        predictions = predictions[-10:]
  
-#         if conf > THRESHOLD:
-#             if predictions.count(max_idx) >= 4:
-#                 predicted_action = str(actions[max_idx])
-#                 return jsonify({
-#                     'success':            True,
-#                     'requiresMoreFrames': False,
-#                     'predictedSign':      predicted_action,
-#                     'mappedWord':         predicted_action,
-#                     'confidence':         conf,
-#                     'handDetected':       hand_detected,
-#                     'message':            'OK (ML Model)'
-#                 }), 200
+        if conf > THRESHOLD:
+            if predictions.count(max_idx) >= 4:
+                predicted_action = str(actions[max_idx])
+                return jsonify({
+                    'success':            True,
+                    'requiresMoreFrames': False,
+                    'predictedSign':      predicted_action,
+                    'mappedWord':         predicted_action,
+                    'confidence':         conf,
+                    'handDetected':       hand_detected,
+                    'message':            'OK (ML Model)'
+                }), 200
  
-#         return jsonify({
-#             'success':            True,
-#             'requiresMoreFrames': False,
-#             'predictedSign':      None,
-#             'confidence':         0.0,
-#             'handDetected':       hand_detected,
-#             'message':            'Detecting...'
-#         }), 200
+        return jsonify({
+            'success':            True,
+            'requiresMoreFrames': False,
+            'predictedSign':      None,
+            'confidence':         0.0,
+            'handDetected':       hand_detected,
+            'message':            'Detecting...'
+        }), 200
  
-#     except Exception as e:
-#         logger.error(f"Predict error: {e}", exc_info=True)
-#         return jsonify({'success': False, 'message': str(e)}), 500
+    except Exception as e:
+        logger.error(f"Predict error: {e}", exc_info=True)
+        return jsonify({'success': False, 'message': str(e)}), 500
  
  
 @app.route('/reset', methods=['POST'])
@@ -186,44 +186,3 @@ if __name__ == '__main__':
     app.run(host='0.0.0.0', port=port, debug=False, threaded=False)
 
 
-
-
-@app.route('/predict', methods=['POST'])
-def predict():
-    try:
-        print("🔥 Request received")
-
-        data = request.json
-        frame_data = data.get('frame')
-
-        if not frame_data:
-            return jsonify({'error': 'No frame'}), 400
-
-        print("🔥 Frame received")
-
-        # Decode base64
-        if 'base64,' in frame_data:
-            frame_data = frame_data.split('base64,')[1]
-
-        image_bytes = base64.b64decode(frame_data)
-        np_arr = np.frombuffer(image_bytes, np.uint8)
-        frame = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
-
-        if frame is None:
-            return jsonify({'error': 'Invalid image'}), 400
-
-        print("🔥 Image decoded")
-
-        # Test mediapipe
-        _, results = mediapipe_detection(frame)
-
-        print("🔥 Mediapipe done")
-
-        return jsonify({
-            "success": True,
-            "prediction": "A"
-        })
-
-    except Exception as e:
-        print("❌ ERROR:", str(e))
-        return jsonify({'error': str(e)}), 500
