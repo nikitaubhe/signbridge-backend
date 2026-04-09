@@ -93,23 +93,20 @@ sequence_length = 30
 detector = None
 
 try:
- base_options = python.BaseOptions(model_asset_path='hand_landmarker.task')
- options = vision.HandLandmarkerOptions(
-base_options=base_options,
-num_hands=1,
-min_hand_detection_confidence=0.5,
-min_hand_presence_confidence=0.5,
-min_tracking_confidence=0.5
-)
+    base_options = python.BaseOptions(model_asset_path='hand_landmarker.task')
+    options = vision.HandLandmarkerOptions(
+        base_options=base_options,
+        num_hands=1,
+        min_hand_detection_confidence=0.5,
+        min_hand_presence_confidence=0.5,
+        min_tracking_confidence=0.5
+    )
 
-
- detector = vision.HandLandmarker.create_from_options(options)
- print("MediaPipe loaded successfully")
-
+    detector = vision.HandLandmarker.create_from_options(options)
 
 except Exception as e:
- print("MediaPipe not supported:", e)
- detector = None
+    print("MediaPipe not supported:", e)
+    detector = None
 
 # =======================
 
@@ -125,11 +122,11 @@ def mediapipe_detection(image, detector_instance):
 
     mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=image)
 
-detection_result = detector_instance.detect(mp_image)
+    detection_result = detector_instance.detect(mp_image)
 
-image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+    image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
 
-return image, detection_result
+    return image, detection_result
 
 
 # =======================
@@ -145,9 +142,9 @@ def extract_keypoints(detection_result):
     if detection_result.hand_landmarks:
         hand_landmarks = detection_result.hand_landmarks[0]
         rh = np.array([[res.x, res.y, res.z] for res in hand_landmarks]).flatten()
-    return rh
+        return rh
 
-return np.zeros(21 * 3)
+    return np.zeros(21 * 3)
 
 
 # =======================
@@ -169,4 +166,5 @@ def draw_landmarks_on_image(rgb_image, detection_result):
                 x, y = int(landmark.x * w), int(landmark.y * h)
                 cv2.circle(annotated_image, (x, y), 5, (255, 0, 0), -1)
 
-return annotated_image
+    return annotated_image
+
