@@ -93,22 +93,23 @@ sequence_length = 30
 detector = None
 
 try:
-  base_options = python.BaseOptions(model_asset_path='hand_landmarker.task')
-  options = vision.HandLandmarkerOptions(
-  base_options=base_options,
-  num_hands=1,
-  min_hand_detection_confidence=0.5,
-  min_hand_presence_confidence=0.5,
-  min_tracking_confidence=0.5
+ base_options = python.BaseOptions(model_asset_path='hand_landmarker.task')
+ options = vision.HandLandmarkerOptions(
+base_options=base_options,
+num_hands=1,
+min_hand_detection_confidence=0.5,
+min_hand_presence_confidence=0.5,
+min_tracking_confidence=0.5
 )
 
-  detector = vision.HandLandmarker.create_from_options(options)
-  print("✅ MediaPipe loaded successfully")
+
+ detector = vision.HandLandmarker.create_from_options(options)
+ print("MediaPipe loaded successfully")
 
 
 except Exception as e:
-  print("❌ MediaPipe not supported in this environment:", e)
-detector = None
+ print("MediaPipe not supported:", e)
+ detector = None
 
 # =======================
 
@@ -117,14 +118,12 @@ detector = None
 # =======================
 
 def mediapipe_detection(image, detector_instance):
+    if detector_instance is None:
+        return image, None
 
- if detector_instance is None:
-  return image, None
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
-
- image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-
-mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=image)
+    mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=image)
 
 detection_result = detector_instance.detect(mp_image)
 
@@ -133,17 +132,23 @@ image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
 return image, detection_result
 
 
+# =======================
+
+# KEYPOINT EXTRACTION
+
+# =======================
+
 def extract_keypoints(detection_result):
+    if detection_result is None:
+        return np.zeros(21 * 3)
 
- if detection_result is None:
-  return np.zeros(21 * 3)
-
-if detection_result.hand_landmarks:
-    hand_landmarks = detection_result.hand_landmarks[0]
-    rh = np.array([[res.x, res.y, res.z] for res in hand_landmarks]).flatten()
+    if detection_result.hand_landmarks:
+        hand_landmarks = detection_result.hand_landmarks[0]
+        rh = np.array([[res.x, res.y, res.z] for res in hand_landmarks]).flatten()
     return rh
 
 return np.zeros(21 * 3)
+
 
 # =======================
 
@@ -152,20 +157,16 @@ return np.zeros(21 * 3)
 # =======================
 
 def draw_landmarks_on_image(rgb_image, detection_result):
+    annotated_image = np.copy(rgb_image)
 
- annotated_image = np.copy(rgb_image)
+    if detection_result is None:
+        return annotated_image
 
-
-if detection_result is None:
-    return annotated_image
-
-hand_landmarks_list = detection_result.hand_landmarks
-
-if hand_landmarks_list:
-    for hand_landmarks in hand_landmarks_list:
-        for landmark in hand_landmarks:
-            h, w, _ = annotated_image.shape
-            x, y = int(landmark.x * w), int(landmark.y * h)
-            cv2.circle(annotated_image, (x, y), 5, (255, 0, 0), -1)
+    if detection_result.hand_landmarks:
+        for hand_landmarks in detection_result.hand_landmarks:
+            for landmark in hand_landmarks:
+                h, w, _ = annotated_image.shape
+                x, y = int(landmark.x * w), int(landmark.y * h)
+                cv2.circle(annotated_image, (x, y), 5, (255, 0, 0), -1)
 
 return annotated_image
