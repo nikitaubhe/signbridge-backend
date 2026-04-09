@@ -12,70 +12,70 @@ from PIL import Image
 import logging
 import os
  
-# app = Flask(__name__)
-# CORS(app, resources={r"/*": {"origins": "*"}})
+app = Flask(__name__)
+CORS(app, resources={r"/*": {"origins": "*"}})
  
-# # Setup logging
-# logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(message)s')
-# logger = logging.getLogger(__name__)
+# Setup logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(message)s')
+logger = logging.getLogger(__name__)
  
-# # ── Actions (must match training order exactly) ──────────────────────────────
-# actions = np.array(['A', 'B', 'C', 'D', 'E', 'F'])
+# ── Actions (must match training order exactly) ──────────────────────────────
+actions = np.array(['A', 'B', 'C', 'D', 'E', 'F'])
  
-# # Word mapping (Heuristic Keys)
-# word_map = {
-#     'HELLO':      'Hello 👋',
-#     'YES':        'Yes 👍',
-#     'NO':         'No 👎',
-#     'THANK_YOU':  'Thank You ❤️',
-#     'LOVE':       'I Love You 🤟',
-#     'OKAY':       'Okay 👌',
-#     'PEACE':      'Peace/Victory ✌️',
-#     'STOP':       'Stop/Wait ✋'
-# }
+# Word mapping (Heuristic Keys)
+word_map = {
+    'HELLO':      'Hello 👋',
+    'YES':        'Yes 👍',
+    'NO':         'No 👎',
+    'THANK_YOU':  'Thank You ❤️',
+    'LOVE':       'I Love You 🤟',
+    'OKAY':       'Okay 👌',
+    'PEACE':      'Peace/Victory ✌️',
+    'STOP':       'Stop/Wait ✋'
+}
  
-# # ── Load model ───────────────────────────────────────────────────────────────
-# logger.info("Loading model...")
+# ── Load model ───────────────────────────────────────────────────────────────
+logger.info("Loading model...")
  
-# def build_keras_model():
-#     model_seq = Sequential()
-#     model_seq.add(LSTM(64, return_sequences=True, activation='relu', input_shape=(30, 63)))
-#     model_seq.add(LSTM(128, return_sequences=True, activation='relu'))
-#     model_seq.add(LSTM(64, return_sequences=False, activation='relu'))
-#     model_seq.add(Dense(64, activation='relu'))
-#     model_seq.add(Dense(32, activation='relu'))
-#     model_seq.add(Dense(6, activation='softmax'))
-#     return model_seq
+def build_keras_model():
+    model_seq = Sequential()
+    model_seq.add(LSTM(64, return_sequences=True, activation='relu', input_shape=(30, 63)))
+    model_seq.add(LSTM(128, return_sequences=True, activation='relu'))
+    model_seq.add(LSTM(64, return_sequences=False, activation='relu'))
+    model_seq.add(Dense(64, activation='relu'))
+    model_seq.add(Dense(32, activation='relu'))
+    model_seq.add(Dense(6, activation='softmax'))
+    return model_seq
  
-# try:
-#     model = build_keras_model()
-#     model.load_weights("model.h5")
-#     logger.info("Model loaded OK (Native Keras)")
-# except Exception as e:
-#     logger.error(f"Model load FAILED: {e}")
-#     model = None
+try:
+    model = build_keras_model()
+    model.load_weights("model.h5")
+    logger.info("Model loaded OK (Native Keras)")
+except Exception as e:
+    logger.error(f"Model load FAILED: {e}")
+    model = None
  
-# # ── Parameters ───────────────────────────────────────────────────────────────
-# SEQUENCE_LENGTH = 30
-# THRESHOLD       = 0.6
+# ── Parameters ───────────────────────────────────────────────────────────────
+SEQUENCE_LENGTH = 30
+THRESHOLD       = 0.6
  
-# # State (per-server; single user)
-# sequence    = []
-# predictions = []
- 
- 
-# @app.route("/")
-# def home():
-#     return "Backend is running 🚀"
+# State (per-server; single user)
+sequence    = []
+predictions = []
  
  
-# @app.route('/health', methods=['GET'])
-# def health_check():
-#     return jsonify({
-#         'status': 'healthy',
-#         'model_loaded': model is not None,
-#         'message': 'Python ML service is running'
-#     }), 200
+@app.route("/")
+def home():
+    return "Backend is running 🚀"
+ 
+ 
+@app.route('/health', methods=['GET'])
+def health_check():
+    return jsonify({
+        'status': 'healthy',
+        'model_loaded': model is not None,
+        'message': 'Python ML service is running'
+    }), 200
  
  
 # @app.route('/predict', methods=['POST'])
@@ -172,18 +172,18 @@ import os
 #         return jsonify({'success': False, 'message': str(e)}), 500
  
  
-# @app.route('/reset', methods=['POST'])
-# def reset_sequence():
-#     global sequence, predictions
-#     sequence    = []
-#     predictions = []
-#     return jsonify({'success': True, 'message': 'Reset OK'}), 200
+@app.route('/reset', methods=['POST'])
+def reset_sequence():
+    global sequence, predictions
+    sequence    = []
+    predictions = []
+    return jsonify({'success': True, 'message': 'Reset OK'}), 200
  
  
-# if __name__ == '__main__':
-#     port = int(os.environ.get("PORT", 10000))
-#     logger.info(f"Flask starting on port {port}")
-#     app.run(host='0.0.0.0', port=port, debug=False, threaded=False)
+if __name__ == '__main__':
+    port = int(os.environ.get("PORT", 10000))
+    logger.info(f"Flask starting on port {port}")
+    app.run(host='0.0.0.0', port=port, debug=False, threaded=False)
 
 
 
