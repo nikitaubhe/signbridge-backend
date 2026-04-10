@@ -215,12 +215,12 @@ word_map = {
     'STOP':      'Stop/Wait ✋'
 }
 
+
+from flask_cors import CORS
+
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": [
-    "https://signbridge-frontend-fcxbl6nbl-nikitaubhes-projects.vercel.app",
-    "http://localhost:5173",
-    "http://localhost:3000"
-]}}, supports_credentials=True)
+CORS(app, origins=["https://signbridge-frontend-fcxbl6nbl-nikitaubhes-projects.vercel.app"])
+
 
 def build_model():
     m = Sequential()
