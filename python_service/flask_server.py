@@ -185,14 +185,12 @@
 #     logger.info(f"Flask starting on port {port}")
 #     app.run(host='0.0.0.0', port=port, debug=False, threaded=False)
 
-
-
-
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from function import *
 from detector_utils import detect_sign_heuristic
-from keras.models import model_from_json
+from keras.models import Sequential
+from keras.layers import LSTM, Dense
 import cv2
 import numpy as np
 import base64
@@ -201,47 +199,49 @@ from PIL import Image
 from collections import deque
 import logging
 
-# Setup logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(message)s')
 logger = logging.getLogger(__name__)
 
-# ── Actions (must match training order exactly) ──────────────────────────────
 actions = np.array(['A', 'B', 'C', 'D', 'E', 'F'])
 
-# Word mapping (Heuristic Keys)
 word_map = {
-    'HELLO':      'Hello 👋',
-    'YES':        'Yes 👍',
-    'NO':         'No 👎',
-    'THANK_YOU':  'Thank You ❤️',
-    'LOVE':       'I Love You 🤟',
-    'OKAY':       'Okay 👌',
-    'PEACE':      'Peace/Victory ✌️',
-    'STOP':       'Stop/Wait ✋'
+    'HELLO':     'Hello 👋',
+    'YES':       'Yes 👍',
+    'NO':        'No 👎',
+    'THANK_YOU': 'Thank You ❤️',
+    'LOVE':      'I Love You 🤟',
+    'OKAY':      'Okay 👌',
+    'PEACE':     'Peace/Victory ✌️',
+    'STOP':      'Stop/Wait ✋'
 }
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
 
-# ── Load model ───────────────────────────────────────────────────────────────
+def build_model():
+    m = Sequential()
+    m.add(LSTM(64,  return_sequences=True,  activation='relu', input_shape=(30, 63)))
+    m.add(LSTM(128, return_sequences=True,  activation='relu'))
+    m.add(LSTM(64,  return_sequences=False, activation='relu'))
+    m.add(Dense(64, activation='relu'))
+    m.add(Dense(32, activation='relu'))
+    m.add(Dense(6,  activation='softmax'))
+    return m
+
 logger.info("Loading model...")
 try:
-    with open("model.json", "r") as f:
-        model = model_from_json(f.read())
+    model = build_model()
     model.load_weights("model.h5")
-    logger.info("Model loaded OK")
+    logger.info("Model loaded OK ✅")
 except Exception as e:
     logger.error(f"Model load FAILED: {e}")
     model = None
 
-# ── Parameters (Instant Reliability Fix) ───────────────────────────────────
-SEQUENCE_LENGTH = 1     # Set to 1 for instant response (no sequence needed)
-THRESHOLD       = 0.7   # Confidence for heuristic matches
-VOTE_WINDOW     = 1     # No voting needed for deterministic logic
+SEQUENCE_LENGTH = 30   # ✅ must match training
+THRESHOLD       = 0.6
 
-# State (per-server; single user)
-sequence    = []        # list of keypoint arrays (plain list like test_model.py)
-predictions = []        # recent argmax predictions
+sequence    = deque(maxlen=30)  # ✅ auto-trims to last 30 frames
+predictions = []
 
 
 @app.route('/health', methods=['GET'])
@@ -267,55 +267,44 @@ def predict():
         if not frame_data:
             return jsonify({'success': False, 'message': 'No frame data'}), 400
 
-        # Strip base64 header
         if 'base64,' in frame_data:
             frame_data = frame_data.split('base64,')[1]
 
-        # Decode image
         image_bytes = base64.b64decode(frame_data)
         image = Image.open(BytesIO(image_bytes)).convert('RGB')
         frame = np.array(image)
         frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
 
-        # MediaPipe detection
         _, results = mediapipe_detection(frame, detector)
         keypoints = extract_keypoints(results)
 
         hand_detected = bool(np.any(keypoints != 0))
 
-        # ── Mirror EXACTLY what test_model.py does ───────────────────────────
         sequence.append(keypoints)
-        sequence = sequence[-SEQUENCE_LENGTH:]   # keep last 30 frames
+        logger.info(f"hand={hand_detected} seq={len(sequence)}/{SEQUENCE_LENGTH}")
 
-        logger.info(f"hand={hand_detected} seq={len(sequence)}/30")
-
-        # Warmup: need 30 frames
+        # ── Warmup: collect 30 frames first ──────────────────────────────────
         if len(sequence) < SEQUENCE_LENGTH:
             return jsonify({
-                'success': True,
+                'success':            True,
                 'requiresMoreFrames': True,
-                'progress': len(sequence),
-                'total': SEQUENCE_LENGTH,
-                'handDetected': hand_detected,
-                'message': f'Collecting {len(sequence)}/{SEQUENCE_LENGTH}'
+                'progress':           len(sequence),
+                'total':              SEQUENCE_LENGTH,
+                'handDetected':       hand_detected,
+                'message':            f'Collecting {len(sequence)}/{SEQUENCE_LENGTH}'
             }), 200
 
-        # ── Heuristic Detection (Permanent Fix) ──
+        # ── Step 1: Heuristic Detection (HELLO, YES, NO etc.) ────────────────
         h_sign, h_conf = detect_sign_heuristic(keypoints)
-        
-        # Temporal Smoothing: Keep last 5 heuristic results
-        if not hasattr(predict, "h_history"): 
+
+        if not hasattr(predict, "h_history"):
             predict.h_history = deque(maxlen=5)
-        
-        if h_sign: predict.h_history.append(h_sign)
-        else: predict.h_history.append(None)
-        
-        # Logic: If a sign dominates the last 5 frames, show it
+
+        predict.h_history.append(h_sign if h_sign else None)
+
         valid_signs = [s for s in predict.h_history if s is not None]
         if valid_signs:
-            # Get most common sign in history
             predicted_action = max(set(valid_signs), key=valid_signs.count)
-            # If it appeared in at least 3 of last 5 frames
             if predict.h_history.count(predicted_action) >= 3:
                 display_word = word_map.get(predicted_action, predicted_action)
                 return jsonify({
@@ -325,9 +314,33 @@ def predict():
                     'mappedWord':         display_word,
                     'confidence':         h_conf,
                     'handDetected':       hand_detected,
-                    'message':            'OK (Stable)'
+                    'message':            'OK (Heuristic)'
                 }), 200
 
+        # ── Step 2: ML Model Detection (A, B, C, D, E, F) ───────────────────
+        input_data = np.expand_dims(list(sequence), axis=0)
+        res = model.predict(input_data, verbose=0)[0]
+        max_idx = int(np.argmax(res))
+        conf = float(res[max_idx])
+
+        logger.info(f"ML prediction: {actions[max_idx]} conf={conf:.2f}")
+
+        predictions.append(max_idx)
+        predictions = predictions[-10:]
+
+        if conf > THRESHOLD and predictions.count(max_idx) >= 4:
+            predicted_action = str(actions[max_idx])
+            return jsonify({
+                'success':            True,
+                'requiresMoreFrames': False,
+                'predictedSign':      predicted_action,
+                'mappedWord':         predicted_action,
+                'confidence':         conf,
+                'handDetected':       hand_detected,
+                'message':            'OK (ML)'
+            }), 200
+
+        # ── Step 3: Nothing detected yet ─────────────────────────────────────
         return jsonify({
             'success':            True,
             'requiresMoreFrames': False,
@@ -345,8 +358,10 @@ def predict():
 @app.route('/reset', methods=['POST'])
 def reset_sequence():
     global sequence, predictions
-    sequence    = []
+    sequence.clear()
     predictions = []
+    if hasattr(predict, "h_history"):
+        predict.h_history.clear()
     return jsonify({'success': True, 'message': 'Reset OK'}), 200
 
 
